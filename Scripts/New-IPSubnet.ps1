@@ -1,5 +1,6 @@
 ﻿<#PSScriptInfo
-    .VERSION 1.0.1
+
+    .VERSION 1.0.2
 
     .GUID 3bb10ee7-38c1-41b9-88ea-16899164fc19
 
@@ -9,11 +10,11 @@
 
     .COPYRIGHT (c) 2022 Anthony J. Raymond
 
-    .TAGS IP Subnet Network
+    .TAGS IP Subnet Network IPv4 IPv6
 
-    .LICENSEURI https://choosealicense.com/licenses/mit/
+    .LICENSEURI https://github.com/CodeAJGit/posh/blob/main/LICENSE
 
-    .PROJECTURI https://www.powershellgallery.com/profiles/CodeAJ
+    .PROJECTURI https://github.com/CodeAJGit/posh
 
     .ICONURI
 
@@ -26,18 +27,15 @@
     .RELEASENOTES
         20220302-AJR: v1.0.0 - Initial Release
         20220302-AJR: v1.0.1 - Fix Clerical Errors and Added Tags
+        20220305-AJR: v1.0.2 - Updated Metadata
 
     .PRIVATEDATA
+
 #>
-
-#Requires -Version 5.1
-
 <#
-    .FUNCTIONALITY
-        Helper function for creating [IPSubnet] objects.
 
     .DESCRIPTION
-        Creates an object for use to manipulate IPv4 & IPv6 subnets called [IPSubnet].
+        Creates an [IPSubnet] object for use to manipulate IPv4 & IPv6 subnets.
 
     .EXAMPLE
         .\New-IPSubnet.ps1 192.168.1.0/30
@@ -50,6 +48,7 @@
 
     .PARAMETER Prefix
         <Optional> Specifies the prefix (or network portion) of the address.
+
 #>
 [CmdletBinding()]
 [OutputType([object])]
