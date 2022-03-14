@@ -1,6 +1,6 @@
 ﻿<#PSScriptInfo
 
-    .VERSION 1.0.0
+    .VERSION 1.0.1
 
     .GUID 80339863-e3c5-4a1c-a995-bc344f339e46
 
@@ -10,7 +10,7 @@
 
     .COPYRIGHT (c) 2022 Anthony J. Raymond
 
-    .TAGS Word Wrap WordWrap Word-Wrap String Text
+    .TAGS word wrap wordwrap word-wrap string text format
 
     .LICENSEURI https://github.com/CodeAJGit/posh/blob/main/LICENSE
 
@@ -26,12 +26,14 @@
 
     .RELEASENOTES
         20220307-AJR: v1.0.0 - Initial Release
+        20220314-AJR: v1.0.1 - Removed Hyphen from Naming
 
     .PRIVATEDATA
 
 #>
 
 <#
+
     .DESCRIPTION
         Formats the output as a text wrapping string.
 
@@ -46,6 +48,7 @@
 
     .PARAMETER Collapse
         Removes duplicate instances of white-space characters from the output.
+
 #>
 function Format-Wrap {
     [CmdletBinding(
@@ -115,7 +118,7 @@ function Format-Wrap {
 
     ## CLEAN UP ###############################################################
     End {
-        [void]([System.GC]::GetTotalMemory($true))
+        $null = [System.GC]::GetTotalMemory($true)
     }
 }
 
