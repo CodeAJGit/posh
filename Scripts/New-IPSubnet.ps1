@@ -1,6 +1,6 @@
 ﻿<#PSScriptInfo
 
-    .VERSION 1.0.2
+    .VERSION 1.0.3
 
     .GUID 3bb10ee7-38c1-41b9-88ea-16899164fc19
 
@@ -10,7 +10,7 @@
 
     .COPYRIGHT (c) 2022 Anthony J. Raymond
 
-    .TAGS IP Subnet Network IPv4 IPv6
+    .TAGS IP subnet network ipv4 ipv6
 
     .LICENSEURI https://github.com/CodeAJGit/posh/blob/main/LICENSE
 
@@ -28,6 +28,7 @@
         20220302-AJR: v1.0.0 - Initial Release
         20220302-AJR: v1.0.1 - Fix Clerical Errors and Added Tags
         20220305-AJR: v1.0.2 - Updated Metadata
+        20220305-AJR: v1.0.3 - Replace void cast with $null
 
     .PRIVATEDATA
 
@@ -87,7 +88,7 @@ class IPSubnet : System.Object {
         return ("{0}/{1}" -f $this.Network, $this.Prefix)
     }
 
-    [bool] Contains([System.Net.IPAddress]$InputIPAddress) {
+    [bool] Contains([System.Net.IPAddress] $InputIPAddress) {
         # compute and compare network address
         $InputAddress = $this.ToAddress($InputIPAddress, $false) -band $this.PrefixInt
         $NetworkAddress = $this.ToAddress($this.Network, $false)
@@ -95,7 +96,7 @@ class IPSubnet : System.Object {
         return ($NetworkAddress -eq $InputAddress)
     }
 
-    [IPSubnet[]] Subnet([int]$InputPrefix) {
+    [IPSubnet[]] Subnet([int] $InputPrefix) {
         $Power = switch ($this.AddressFamily) {
             "InterNetwork" { [bigint]::Pow(2, (32 - $InputPrefix)) }
             "InterNetworkV6" { [bigint]::Pow(2, (128 - $InputPrefix)) }
@@ -106,7 +107,7 @@ class IPSubnet : System.Object {
         return $Subnets
     }
 
-    [bigint] hidden ToAddress([System.Net.IPAddress]$InputIPAddress, [bool]$Reverse) {
+    [bigint] hidden ToAddress([System.Net.IPAddress] $InputIPAddress, [bool] $Reverse) {
         # here we go address -> bytes -> reverse -> bigint
         [byte[]] $Bytes = $InputIPAddress.GetAddressBytes()
 
@@ -117,14 +118,14 @@ class IPSubnet : System.Object {
         return [bigint]::new($Bytes + 0)
     }
 
-    [System.Net.IPAddress] hidden FromAddress([bigint]$InputInt, [bool]$Reverse) {
+    [System.Net.IPAddress] hidden FromAddress([bigint] $InputInt, [bool] $Reverse) {
         # here we go backward bigint -> bytes -> reverse -> address
         [byte[]] $Bytes = $InputInt.ToByteArray()
 
         # we're going to pad the array for the size that the IPAddress constructor expects
         switch ($this.AddressFamily) {
-            "InterNetwork" { [array]::Resize([ref]$Bytes, 4) }
-            "InterNetworkV6" { [array]::Resize([ref]$Bytes, 16) }
+            "InterNetwork" { [array]::Resize([ref] $Bytes, 4) }
+            "InterNetworkV6" { [array]::Resize([ref] $Bytes, 16) }
         }
         if ($Reverse) {
             [array]::Reverse($Bytes)
@@ -132,7 +133,7 @@ class IPSubnet : System.Object {
         return ([System.Net.IPAddress] $Bytes)
     }
 
-    [bigint] hidden GetPrefixInt([int]$InputInt) {
+    [bigint] hidden GetPrefixInt([int] $InputInt) {
         # turn prefix into binary string so we can work with it
         $Binary = switch ($this.AddressFamily) {
             "InterNetwork" { ('1' * $InputInt).PadRight(32, '0') }
@@ -146,7 +147,7 @@ class IPSubnet : System.Object {
         return [bigint]::new($Bytes + 0)
     }
 
-    [void] hidden __init__([System.Net.IPAddress]$InputIPAddress, [int]$InputPrefix) {
+    [void] hidden __init__([System.Net.IPAddress] $InputIPAddress, [int] $InputPrefix) {
         $this.Prefix = $InputPrefix
         $this.AddressFamily = $InputIPAddress.AddressFamily
 
@@ -179,11 +180,11 @@ class IPSubnet : System.Object {
     }
 
     # class constructors ##################################################
-    IPSubnet([System.Net.IPAddress]$InputIPAddress, [int]$InputPrefix) {
+    IPSubnet([System.Net.IPAddress] $InputIPAddress, [int] $InputPrefix) {
         $this.__init__($InputIPAddress, $InputPrefix)
     }
 
-    IPSubnet([string]$InputString) {
+    IPSubnet([string] $InputString) {
         try {
             $SplitString = $InputString -split '\\|\/'
             [System.Net.IPAddress] $InputIPAddress = $SplitString[0]
@@ -200,4 +201,4 @@ class IPSubnet : System.Object {
 [IPSubnet]::new(($Subnet -split '\\|\/')[0], $Prefix)
 
 ## CLEAN UP ###############################################################
-[void]([System.GC]::GetTotalMemory($true))
+$null = [System.GC]::GetTotalMemory($true)
