@@ -59,8 +59,8 @@ function Format-Wrap {
     ## PARAMETERS #############################################################
     param (
         [Parameter(
-            Position = 0,
             Mandatory,
+            Position = 0,
             ValueFromPipeline
         )]
         [object]
@@ -93,7 +93,7 @@ function Format-Wrap {
     )
 
     ## EXECUTION ##############################################################
-    Process {
+    process {
         foreach ($Object in $InputObject) {
             $br = [System.Environment]::NewLine
 
@@ -102,12 +102,12 @@ function Format-Wrap {
             }
 
             $String = switch ($Collapse) {
-                default {[string]$Object}
-                "NewLine" {[string]$Object -replace "(\r?\n)+", "$br"}
-                "Space" {[string]$Object -replace "\ +", " "}
-                "TabToSpace" {[string]$Object -replace "\t", " "}
-                "SpaceTab" {[string]$Object -replace "[^\S\r\n]+", " "}
-                "All" {[string]$Object -replace "\s+", " "}
+                default { [string]$Object }
+                "NewLine" { [string]$Object -replace "(\r?\n)+", "$br" }
+                "Space" { [string]$Object -replace "\ +", " " }
+                "TabToSpace" { [string]$Object -replace "\t", " " }
+                "SpaceTab" { [string]$Object -replace "[^\S\r\n]+", " " }
+                "All" { [string]$Object -replace "\s+", " " }
             }
 
             # regex based on answer from user557597 (anonymous)
@@ -117,7 +117,7 @@ function Format-Wrap {
     }
 
     ## CLEAN UP ###############################################################
-    End {
+    end {
         $null = [System.GC]::GetTotalMemory($true)
     }
 }

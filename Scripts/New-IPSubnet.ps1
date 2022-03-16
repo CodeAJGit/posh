@@ -58,8 +58,8 @@
 ## PARAMETERS #############################################################
 param (
     [Parameter(
-        Position = 0,
-        Mandatory
+        Mandatory,
+        Position = 0
     )]
     [string]
     $Subnet,
@@ -67,7 +67,7 @@ param (
     [Parameter()]
     [ValidateRange(0, 128)]
     [int]
-    $Prefix = ($Subnet -split '\\|\/')[-1]
+    $Prefix = ($Subnet -split "\\|\/")[-1]
 )
 
 ## FUNCTIONS AND SCRIPT VARIABLES #########################################
@@ -140,7 +140,7 @@ class IPSubnet : System.Object {
             "InterNetworkV6" { ('1' * $InputInt).PadRight(128, '0') }
         }
         # the last element of this match is null, so skip it
-        $Octet = $Binary -split '(?<=\G[01]{8})' | Select-Object -SkipLast 1
+        $Octet = $Binary -split "(?<=\G[01]{8})" | Select-Object -SkipLast 1
         $Bytes = $Octet | ForEach-Object { [System.Convert]::ToUInt32($_, 2) }
 
         # append zero byte for unsigned
@@ -166,8 +166,8 @@ class IPSubnet : System.Object {
 
         # using the prefix, we can find the last address
         $EndAddress = switch ($this.AddressFamily) {
-            "InterNetwork" { $StartAddress -bor (-bnot $this.PrefixInt -band ([bigint]::Pow(2, 32) -1)) }
-            "InterNetworkV6" { $StartAddress -bor (-bnot $this.PrefixInt -band ([bigint]::Pow(2, 128) -1)) }
+            "InterNetwork" { $StartAddress -bor (-bnot $this.PrefixInt -band ([bigint]::Pow(2, 32) - 1)) }
+            "InterNetworkV6" { $StartAddress -bor (-bnot $this.PrefixInt -band ([bigint]::Pow(2, 128) - 1)) }
         }
         $this.LastAddress = $this.FromAddress($EndAddress, $false)
 
@@ -186,7 +186,7 @@ class IPSubnet : System.Object {
 
     IPSubnet([string] $InputString) {
         try {
-            $SplitString = $InputString -split '\\|\/'
+            $SplitString = $InputString -split "\\|\/"
             [System.Net.IPAddress] $InputIPAddress = $SplitString[0]
             [int] $InputPrefix = $SplitString[-1]
         }
@@ -198,7 +198,7 @@ class IPSubnet : System.Object {
 }
 
 ## EXECUTION ##############################################################
-[IPSubnet]::new(($Subnet -split '\\|\/')[0], $Prefix)
+[IPSubnet]::new(($Subnet -split "\\|\/")[0], $Prefix)
 
 ## CLEAN UP ###############################################################
 $null = [System.GC]::GetTotalMemory($true)
