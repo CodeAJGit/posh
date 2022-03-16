@@ -10,7 +10,7 @@
 
     .COPYRIGHT (c) 2022 Anthony J. Raymond
 
-    .TAGS IP subnet network ipv4 ipv6
+    .TAGS ip subnet network ipv4 ipv6
 
     .LICENSEURI https://github.com/CodeAJGit/posh/blob/main/LICENSE
 
@@ -130,7 +130,7 @@ class IPSubnet : System.Object {
         if ($Reverse) {
             [array]::Reverse($Bytes)
         }
-        return ([System.Net.IPAddress] $Bytes)
+        return [System.Net.IPAddress] $Bytes
     }
 
     [bigint] hidden GetPrefixInt([int] $InputInt) {

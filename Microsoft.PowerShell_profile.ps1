@@ -11,7 +11,7 @@ function Prompt {
     # function: changes the PowerShell prompt
     Set-PSAdminContext
 
-    $PathArray = $executionContext.SessionState.Path.CurrentLocation.Path.TrimEnd("\") -split '\\'
+    $PathArray = $executionContext.SessionState.Path.CurrentLocation.Path.TrimEnd("\", "/") -split "\\|\/"
     $Host.UI.RawUI.WindowTitle = "Windows PowerShell {0} ~ {1}" -f $Host.Version.ToString(), (($PathArray | Select-Object -SkipLast 1) -join "\")
 
     Write-Host -NoNewline ("[{0}]: " -f $env:COMPUTERNAME.ToLower())
@@ -34,10 +34,10 @@ function Prompt {
 }
 
 
-function Out-Password ([int]$Length = 16) {
+function Out-Password ([int] $Length = 16) {
     # function: outputs a randomly generated password
     # https://www.w3schools.com/charsets/ref_html_ascii.asp
-    return -join (1..$Length | ForEach-Object { [char](Get-Random -Minimum 33 -Maximum 127) })
+    return -join (1..$Length | ForEach-Object { [char] (Get-Random -Minimum 33 -Maximum 127) })
 }
 
 
@@ -51,20 +51,16 @@ using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
 
-namespace Colorful
-{
-    public sealed class ColorMapper
-    {
+namespace Colorful {
+    public sealed class ColorMapper {
         [StructLayout(LayoutKind.Sequential)]
-        private struct COORD
-        {
+        private struct COORD {
             internal short X;
             internal short Y;
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        private struct SMALL_RECT
-        {
+        private struct SMALL_RECT {
             internal short Left;
             internal short Top;
             internal short Right;
@@ -72,24 +68,18 @@ namespace Colorful
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        private struct COLORREF
-        {
+        private struct COLORREF {
             internal uint DWORD;
-
-            internal COLORREF(System.Drawing.Color color)
-            {
+            internal COLORREF(System.Drawing.Color color) {
                 DWORD = ((uint) color.R) + (((uint) color.G) << 8) + (((uint) color.B) << 16);
             }
-
-            internal COLORREF(uint R, uint G, uint B)
-            {
+            internal COLORREF(uint R, uint G, uint B) {
                 DWORD = R + (G << 8) + (B << 16);
             }
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        private struct CONSOLE_SCREEN_BUFFER_INFO_EX
-        {
+        private struct CONSOLE_SCREEN_BUFFER_INFO_EX {
             internal int cbSize;
             internal COORD dwSize;
             internal COORD dwCursorPosition;
@@ -128,8 +118,7 @@ namespace Colorful
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool SetConsoleScreenBufferInfoEx(IntPtr hConsoleOutput, ref CONSOLE_SCREEN_BUFFER_INFO_EX csbe);
 
-        public static void SetColors()
-        {
+        public static void SetColors() {
             IntPtr hConsoleOutput = GetStdHandle(STD_OUTPUT_HANDLE);
             CONSOLE_SCREEN_BUFFER_INFO_EX csbe = GetBufferInfo(hConsoleOutput);
 
@@ -146,8 +135,7 @@ namespace Colorful
             SetBufferInfo(hConsoleOutput, csbe);
         }
 
-        private static CONSOLE_SCREEN_BUFFER_INFO_EX GetBufferInfo(IntPtr hConsoleOutput)
-        {
+        private static CONSOLE_SCREEN_BUFFER_INFO_EX GetBufferInfo(IntPtr hConsoleOutput) {
             CONSOLE_SCREEN_BUFFER_INFO_EX csbe = new CONSOLE_SCREEN_BUFFER_INFO_EX();
             csbe.cbSize = (int)Marshal.SizeOf(csbe);
 
@@ -156,8 +144,7 @@ namespace Colorful
             return csbe;
         }
 
-        private static void SetBufferInfo(IntPtr hConsoleOutput, CONSOLE_SCREEN_BUFFER_INFO_EX csbe)
-        {
+        private static void SetBufferInfo(IntPtr hConsoleOutput, CONSOLE_SCREEN_BUFFER_INFO_EX csbe) {
             csbe.srWindow.Bottom++;
             csbe.srWindow.Right++;
 
