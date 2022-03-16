@@ -17,10 +17,10 @@ function Prompt {
     Write-Host -NoNewline ("[{0}]: " -f $env:COMPUTERNAME.ToLower())
 
     switch ($null) {
-        {$PSAdminContext} {
+        { $PSAdminContext } {
             Write-Host -NoNewline -ForegroundColor red "ADMIN "
         }
-        {$PSDebugContext} {
+        { $PSDebugContext } {
             Write-Host -NoNewline -ForegroundColor magenta "DEBUG "
         }
         default {
@@ -163,45 +163,45 @@ $Host.PrivateData.VerboseForegroundColor = "cyan"
 $Host.PrivateData.ProgressForegroundColor = "darkMagenta"
 
 # Host Background
-$Host.PrivateData.ErrorBackgroundColor  = "darkMagenta"
-$Host.PrivateData.WarningBackgroundColor  = "darkMagenta"
-$Host.PrivateData.DebugBackgroundColor  = "darkMagenta"
-$Host.PrivateData.VerboseBackgroundColor  = "darkMagenta"
-$Host.PrivateData.ProgressBackgroundColor  = "darkCyan"
+$Host.PrivateData.ErrorBackgroundColor = "darkMagenta"
+$Host.PrivateData.WarningBackgroundColor = "darkMagenta"
+$Host.PrivateData.DebugBackgroundColor = "darkMagenta"
+$Host.PrivateData.VerboseBackgroundColor = "darkMagenta"
+$Host.PrivateData.ProgressBackgroundColor = "darkCyan"
 
 # PSReadLine Foreground
 Set-PSReadLineOption -Colors @{
     ContinuationPrompt = "darkYellow"
-    Default = "darkYellow"
-    Comment = "gray"
-    Keyword = "red"
-    String = "cyan"
-    Operator = "red"
-    Variable = "darkCyan"
-    Command = "darkCyan"
-    Parameter = "darkYellow"
-    Type = "red"
-    Number = "darkCyan"
-    Member = "darkYellow"
-    Emphasis = "cyan"
-    Error = "red"
-    Selection = "cyan"
+    Default            = "darkYellow"
+    Comment            = "gray"
+    Keyword            = "red"
+    String             = "cyan"
+    Operator           = "red"
+    Variable           = "darkCyan"
+    Command            = "darkCyan"
+    Parameter          = "darkYellow"
+    Type               = "red"
+    Number             = "darkCyan"
+    Member             = "darkYellow"
+    Emphasis           = "cyan"
+    Error              = "red"
+    Selection          = "cyan"
 }
 
 # Default Configurations
-Set-PSReadlineOption -BellStyle None
+Set-PSReadLineOption -BellStyle None
 $PSSessionOption = New-PSSessionOption -NoMachineProfile -OperationTimeout 30000 -OpenTimeout 30000 -CancelTimeout 30000
 $PSDefaultParameterValues = @{
-    "Get-Help:ShowWindow" = $true
-    "Format-Table:AutoSize" = $true
-    "Out-Default:OutVariable" = "0"
-    "Invoke-WebRequest:Verbose" = $true
+    "Get-Help:ShowWindow"          = $true
+    "Format-Table:AutoSize"        = $true
+    "Out-Default:OutVariable"      = "0"
+    "Invoke-WebRequest:Verbose"    = $true
     "Export-Csv:NoTypeInformation" = $true
-    "*:Encoding" = "Utf8"
+    "*:Encoding"                   = "Utf8"
 }
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-Set-Location ([System.IO.DriveInfo]::GetDrives() | Where-Object DriveType -eq "Fixed")[0].RootDirectory
+Set-Location ([System.IO.DriveInfo]::GetDrives() | Where-Object DriveType -EQ "Fixed")[0].RootDirectory
 
 Clear-Host
 

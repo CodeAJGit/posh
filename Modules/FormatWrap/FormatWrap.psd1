@@ -1,20 +1,20 @@
 @{
 
-    RootModule = "FormatWrap.psm1"
+    RootModule        = "FormatWrap.psm1"
 
-    ModuleVersion = "1.0.1"
+    ModuleVersion     = "1.0.1"
 
     # CompatiblePSEditions = @()
 
-    GUID = "082f979c-9d10-4fbe-ae4b-30afa75987c3"
+    GUID              = "082f979c-9d10-4fbe-ae4b-30afa75987c3"
 
-    Author = "Anthony J. Raymond"
+    Author            = "Anthony J. Raymond"
 
     # CompanyName = ""
 
-    Copyright = "(c) 2022 Anthony J. Raymond"
+    Copyright         = "(c) 2022 Anthony J. Raymond"
 
-    Description = "Formats the output as a text wrapping string."
+    Description       = "Formats the output as a text wrapping string."
 
     # PowerShellVersion = ""
 
@@ -44,11 +44,11 @@
         "Format-Wrap"
     )
 
-    CmdletsToExport = @()
+    CmdletsToExport   = @()
 
     VariablesToExport = ""
 
-    AliasesToExport = @(
+    AliasesToExport   = @(
         "Wrap"
     )
 
@@ -58,11 +58,11 @@
 
     # FileList = @()
 
-    PrivateData = @{
+    PrivateData       = @{
 
         PSData = @{
 
-            Tags = @(
+            Tags         = @(
                 "word"
                 "wrap"
                 "wordwrap"
@@ -72,14 +72,14 @@
                 "format"
             )
 
-            LicenseUri = "https://github.com/CodeAJGit/posh/blob/main/LICENSE"
+            LicenseUri   = "https://github.com/CodeAJGit/posh/blob/main/LICENSE"
 
-            ProjectUri = "https://github.com/CodeAJGit/posh"
+            ProjectUri   = "https://github.com/CodeAJGit/posh"
 
             # IconUri = ""
 
             ReleaseNotes =
-@"
+            @"
     20220307-AJR: v1.0.0 - Initial Release
     20220314-AJR: v1.0.1 - Removed Hyphen from Naming
 "@

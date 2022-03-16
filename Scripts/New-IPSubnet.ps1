@@ -153,9 +153,9 @@ class IPSubnet : System.Object {
 
         # quick prefix validation
         switch ($true) {
-            {$this.AddressFamily -eq "InterNetwork" -and $this.Prefix -in 0..32} { break }
-            {$this.AddressFamily -eq "InterNetworkV6" -and $this.Prefix -in 0..128} { break }
-            default {throw [System.InvalidCastException] "An invalid prefix for the given address family was specified."}
+            { $this.AddressFamily -eq "InterNetwork" -and $this.Prefix -in 0..32 } { break }
+            { $this.AddressFamily -eq "InterNetworkV6" -and $this.Prefix -in 0..128 } { break }
+            default { throw [System.InvalidCastException] "An invalid prefix for the given address family was specified." }
         }
         $this.PrefixInt = $this.GetPrefixInt($this.Prefix)
         $this.SubnetMask = $this.FromAddress($this.PrefixInt, $false)
@@ -189,8 +189,7 @@ class IPSubnet : System.Object {
             $SplitString = $InputString -split "\\|\/"
             [System.Net.IPAddress] $InputIPAddress = $SplitString[0]
             [int] $InputPrefix = $SplitString[-1]
-        }
-        catch {
+        } catch {
             throw [System.InvalidCastException] "An invalid IP address or prefix format was specified."
         }
         $this.__init__($InputIPAddress, $InputPrefix)
