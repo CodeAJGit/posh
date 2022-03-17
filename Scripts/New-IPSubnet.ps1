@@ -70,134 +70,149 @@ param (
     $Prefix = ($Subnet -split "\\|\/")[-1]
 )
 
-## FUNCTIONS AND SCRIPT VARIABLES #########################################
-class IPSubnet : System.Object {
-    # class properties ####################################################
-    [System.Net.IPAddress] $Network
-    [System.Net.Sockets.AddressFamily] $AddressFamily
-    [ValidateRange(0, 128)] [int] $Prefix
-    [System.Net.IPAddress] $SubnetMask
-    [System.Net.IPAddress] $LastAddress
+## BEGIN ##################################################################
+begin {
+    Write-Verbose "start begin block"
+    class IPSubnet : System.Object {
+        # class properties ################################################
+        [System.Net.IPAddress] $Network
+        [System.Net.Sockets.AddressFamily] $AddressFamily
+        [ValidateRange(0, 128)] [int] $Prefix
+        [System.Net.IPAddress] $SubnetMask
+        [System.Net.IPAddress] $LastAddress
 
-    [bigint] hidden $PrefixInt
-    [bigint] hidden $StartInt
-    [bigint] hidden $EndInt
+        [bigint] hidden $PrefixInt
+        [bigint] hidden $StartInt
+        [bigint] hidden $EndInt
 
-    # class methods #######################################################
-    [string] ToString() {
-        return ("{0}/{1}" -f $this.Network, $this.Prefix)
+        # class methods ###################################################
+        [string] ToString() {
+            return ("{0}/{1}" -f $this.Network, $this.Prefix)
+        }
+
+        [bool] Contains([System.Net.IPAddress] $InputIPAddress) {
+            # compute and compare network address
+            $InputAddress = $this.ToAddress($InputIPAddress, $false) -band $this.PrefixInt
+            $NetworkAddress = $this.ToAddress($this.Network, $false)
+
+            return ($NetworkAddress -eq $InputAddress)
+        }
+
+        [IPSubnet[]] Subnet([int] $InputPrefix) {
+            $Power = switch ($this.AddressFamily) {
+                "InterNetwork" { [bigint]::Pow(2, (32 - $InputPrefix)) }
+                "InterNetworkV6" { [bigint]::Pow(2, (128 - $InputPrefix)) }
+            }
+            $Subnets = for ($AddressInt = $this.StartInt; $AddressInt -le $this.EndInt; $AddressInt += $Power) {
+                [IPSubnet]::new(($this.FromAddress($AddressInt, $true)), $InputPrefix)
+            }
+            return $Subnets
+        }
+
+        [bigint] hidden ToAddress([System.Net.IPAddress] $InputIPAddress, [bool] $Reverse) {
+            # here we go address -> bytes -> reverse -> bigint
+            [byte[]] $Bytes = $InputIPAddress.GetAddressBytes()
+
+            if ($Reverse) {
+                [array]::Reverse($Bytes)
+            }
+            # append zero byte for unsigned
+            return [bigint]::new($Bytes + 0)
+        }
+
+        [System.Net.IPAddress] hidden FromAddress([bigint] $InputInt, [bool] $Reverse) {
+            # here we go backward bigint -> bytes -> reverse -> address
+            [byte[]] $Bytes = $InputInt.ToByteArray()
+
+            # we're going to pad the array for the size that the IPAddress constructor expects
+            switch ($this.AddressFamily) {
+                "InterNetwork" { [array]::Resize([ref] $Bytes, 4) }
+                "InterNetworkV6" { [array]::Resize([ref] $Bytes, 16) }
+            }
+            if ($Reverse) {
+                [array]::Reverse($Bytes)
+            }
+            return [System.Net.IPAddress] $Bytes
+        }
+
+        [bigint] hidden GetPrefixInt([int] $InputInt) {
+            # turn prefix into binary string so we can work with it
+            $Binary = switch ($this.AddressFamily) {
+                "InterNetwork" { ('1' * $InputInt).PadRight(32, '0') }
+                "InterNetworkV6" { ('1' * $InputInt).PadRight(128, '0') }
+            }
+            # the last element of this match is null, so skip it
+            $Octet = $Binary -split "(?<=\G[01]{8})" | Select-Object -SkipLast 1
+            $Bytes = $Octet | ForEach-Object { [System.Convert]::ToUInt32($_, 2) }
+
+            # append zero byte for unsigned
+            return [bigint]::new($Bytes + 0)
+        }
+
+        [void] hidden __init__([System.Net.IPAddress] $InputIPAddress, [int] $InputPrefix) {
+            $this.Prefix = $InputPrefix
+            $this.AddressFamily = $InputIPAddress.AddressFamily
+
+            # quick prefix validation
+            switch ($true) {
+                { $this.AddressFamily -eq "InterNetwork" -and $this.Prefix -in 0..32 } { break }
+                { $this.AddressFamily -eq "InterNetworkV6" -and $this.Prefix -in 0..128 } { break }
+                default { throw [System.InvalidCastException] "An invalid prefix for the given address family was specified." }
+            }
+            $this.PrefixInt = $this.GetPrefixInt($this.Prefix)
+            $this.SubnetMask = $this.FromAddress($this.PrefixInt, $false)
+
+            # using the prefix we can find the network address
+            $StartAddress = $this.ToAddress($InputIPAddress, $false) -band $this.PrefixInt
+            $this.Network = $this.FromAddress($StartAddress, $false)
+
+            # using the prefix, we can find the last address
+            $EndAddress = switch ($this.AddressFamily) {
+                "InterNetwork" { $StartAddress -bor (-bnot $this.PrefixInt -band ([bigint]::Pow(2, 32) - 1)) }
+                "InterNetworkV6" { $StartAddress -bor (-bnot $this.PrefixInt -band ([bigint]::Pow(2, 128) - 1)) }
+            }
+            $this.LastAddress = $this.FromAddress($EndAddress, $false)
+
+            $this.StartInt = $this.ToAddress($this.Network, $true)
+            $this.EndInt = $this.ToAddress($this.LastAddress, $true)
+
+            Update-TypeData -TypeName IPSubnet -MemberType AliasProperty -MemberName Broadcast -Value LastAddress -Force
+            Update-TypeData -TypeName IPSubnet -MemberType AliasProperty -MemberName Mask -Value SubnetMask -Force
+            Update-TypeData -TypeName IPSubnet -DefaultDisplayPropertySet Network, AddressFamily, Prefix, LastAddress -Force
+        }
+
+        # class constructors ##############################################
+        IPSubnet([System.Net.IPAddress] $InputIPAddress, [int] $InputPrefix) {
+            $this.__init__($InputIPAddress, $InputPrefix)
+        }
+
+        IPSubnet([string] $InputString) {
+            try {
+                $SplitString = $InputString -split "\\|\/"
+                [System.Net.IPAddress] $InputIPAddress = $SplitString[0]
+                [int] $InputPrefix = $SplitString[-1]
+            } catch {
+                throw [System.InvalidCastException] "An invalid IP address or prefix format was specified."
+            }
+            $this.__init__($InputIPAddress, $InputPrefix)
+        }
     }
 
-    [bool] Contains([System.Net.IPAddress] $InputIPAddress) {
-        # compute and compare network address
-        $InputAddress = $this.ToAddress($InputIPAddress, $false) -band $this.PrefixInt
-        $NetworkAddress = $this.ToAddress($this.Network, $false)
-
-        return ($NetworkAddress -eq $InputAddress)
-    }
-
-    [IPSubnet[]] Subnet([int] $InputPrefix) {
-        $Power = switch ($this.AddressFamily) {
-            "InterNetwork" { [bigint]::Pow(2, (32 - $InputPrefix)) }
-            "InterNetworkV6" { [bigint]::Pow(2, (128 - $InputPrefix)) }
-        }
-        $Subnets = for ($AddressInt = $this.StartInt; $AddressInt -le $this.EndInt; $AddressInt += $Power) {
-            [IPSubnet]::new(($this.FromAddress($AddressInt, $true)), $InputPrefix)
-        }
-        return $Subnets
-    }
-
-    [bigint] hidden ToAddress([System.Net.IPAddress] $InputIPAddress, [bool] $Reverse) {
-        # here we go address -> bytes -> reverse -> bigint
-        [byte[]] $Bytes = $InputIPAddress.GetAddressBytes()
-
-        if ($Reverse) {
-            [array]::Reverse($Bytes)
-        }
-        # append zero byte for unsigned
-        return [bigint]::new($Bytes + 0)
-    }
-
-    [System.Net.IPAddress] hidden FromAddress([bigint] $InputInt, [bool] $Reverse) {
-        # here we go backward bigint -> bytes -> reverse -> address
-        [byte[]] $Bytes = $InputInt.ToByteArray()
-
-        # we're going to pad the array for the size that the IPAddress constructor expects
-        switch ($this.AddressFamily) {
-            "InterNetwork" { [array]::Resize([ref] $Bytes, 4) }
-            "InterNetworkV6" { [array]::Resize([ref] $Bytes, 16) }
-        }
-        if ($Reverse) {
-            [array]::Reverse($Bytes)
-        }
-        return [System.Net.IPAddress] $Bytes
-    }
-
-    [bigint] hidden GetPrefixInt([int] $InputInt) {
-        # turn prefix into binary string so we can work with it
-        $Binary = switch ($this.AddressFamily) {
-            "InterNetwork" { ('1' * $InputInt).PadRight(32, '0') }
-            "InterNetworkV6" { ('1' * $InputInt).PadRight(128, '0') }
-        }
-        # the last element of this match is null, so skip it
-        $Octet = $Binary -split "(?<=\G[01]{8})" | Select-Object -SkipLast 1
-        $Bytes = $Octet | ForEach-Object { [System.Convert]::ToUInt32($_, 2) }
-
-        # append zero byte for unsigned
-        return [bigint]::new($Bytes + 0)
-    }
-
-    [void] hidden __init__([System.Net.IPAddress] $InputIPAddress, [int] $InputPrefix) {
-        $this.Prefix = $InputPrefix
-        $this.AddressFamily = $InputIPAddress.AddressFamily
-
-        # quick prefix validation
-        switch ($true) {
-            { $this.AddressFamily -eq "InterNetwork" -and $this.Prefix -in 0..32 } { break }
-            { $this.AddressFamily -eq "InterNetworkV6" -and $this.Prefix -in 0..128 } { break }
-            default { throw [System.InvalidCastException] "An invalid prefix for the given address family was specified." }
-        }
-        $this.PrefixInt = $this.GetPrefixInt($this.Prefix)
-        $this.SubnetMask = $this.FromAddress($this.PrefixInt, $false)
-
-        # using the prefix we can find the network address
-        $StartAddress = $this.ToAddress($InputIPAddress, $false) -band $this.PrefixInt
-        $this.Network = $this.FromAddress($StartAddress, $false)
-
-        # using the prefix, we can find the last address
-        $EndAddress = switch ($this.AddressFamily) {
-            "InterNetwork" { $StartAddress -bor (-bnot $this.PrefixInt -band ([bigint]::Pow(2, 32) - 1)) }
-            "InterNetworkV6" { $StartAddress -bor (-bnot $this.PrefixInt -band ([bigint]::Pow(2, 128) - 1)) }
-        }
-        $this.LastAddress = $this.FromAddress($EndAddress, $false)
-
-        $this.StartInt = $this.ToAddress($this.Network, $true)
-        $this.EndInt = $this.ToAddress($this.LastAddress, $true)
-
-        Update-TypeData -TypeName IPSubnet -MemberType AliasProperty -MemberName Broadcast -Value LastAddress -Force
-        Update-TypeData -TypeName IPSubnet -MemberType AliasProperty -MemberName Mask -Value SubnetMask -Force
-        Update-TypeData -TypeName IPSubnet -DefaultDisplayPropertySet Network, AddressFamily, Prefix, LastAddress -Force
-    }
-
-    # class constructors ##################################################
-    IPSubnet([System.Net.IPAddress] $InputIPAddress, [int] $InputPrefix) {
-        $this.__init__($InputIPAddress, $InputPrefix)
-    }
-
-    IPSubnet([string] $InputString) {
-        try {
-            $SplitString = $InputString -split "\\|\/"
-            [System.Net.IPAddress] $InputIPAddress = $SplitString[0]
-            [int] $InputPrefix = $SplitString[-1]
-        } catch {
-            throw [System.InvalidCastException] "An invalid IP address or prefix format was specified."
-        }
-        $this.__init__($InputIPAddress, $InputPrefix)
+    ## TRAP ###############################################################
+    trap {
+        Write-Verbose "throw unhandled exceptions"
+        throw $_
     }
 }
 
-## EXECUTION ##############################################################
-[IPSubnet]::new(($Subnet -split "\\|\/")[0], $Prefix)
+## PROCESS ################################################################
+process {
+    Write-Verbose "start process block"
+    [IPSubnet]::new(($Subnet -split "\\|\/")[0], $Prefix)
+}
 
-## CLEAN UP ###############################################################
-$null = [System.GC]::GetTotalMemory($true)
+## END ####################################################################
+end {
+    Write-Verbose "start end block"
+    $null = [System.GC]::GetTotalMemory($true)
+}

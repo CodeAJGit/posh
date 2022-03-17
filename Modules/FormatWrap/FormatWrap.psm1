@@ -92,22 +92,34 @@ function Format-Wrap {
         $Collapse = "None"
     )
 
-    ## EXECUTION ##############################################################
+    ## BEGIN ##################################################################
+    begin {
+        Write-Verbose "start begin block"
+        $br = [System.Environment]::NewLine
+
+        ## TRAP ###############################################################
+        trap {
+            Write-Verbose "throw unhandled exceptions"
+            throw $_
+        }
+    }
+
+    ## PROCESS ################################################################
     process {
+        Write-Verbose "start process block"
         foreach ($Object in $InputObject) {
-            $br = [System.Environment]::NewLine
 
             if ($AutoSize) {
                 $Width = $Host.UI.RawUI.WindowSize.Width
             }
 
             $String = switch ($Collapse) {
-                default { [string]$Object }
-                "NewLine" { [string]$Object -replace "(\r?\n)+", "$br" }
-                "Space" { [string]$Object -replace "\ +", " " }
-                "TabToSpace" { [string]$Object -replace "\t", " " }
-                "SpaceTab" { [string]$Object -replace "[^\S\r\n]+", " " }
-                "All" { [string]$Object -replace "\s+", " " }
+                default { [string] $Object }
+                "NewLine" { $Object -replace "(\r?\n)+", "$br" }
+                "Space" { $Object -replace "\ +", " " }
+                "TabToSpace" { $Object -replace "\t", " " }
+                "SpaceTab" { $Object -replace "[^\S\r\n]+", " " }
+                "All" { $Object -replace "\s+", " " }
             }
 
             # regex based on answer from user557597 (anonymous)
@@ -116,8 +128,9 @@ function Format-Wrap {
         }
     }
 
-    ## CLEAN UP ###############################################################
+    ## END ####################################################################
     end {
+        Write-Verbose "start end block"
         $null = [System.GC]::GetTotalMemory($true)
     }
 }
