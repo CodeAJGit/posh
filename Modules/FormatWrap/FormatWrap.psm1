@@ -25,8 +25,7 @@
     .EXTERNALSCRIPTDEPENDENCIES
 
     .RELEASENOTES
-        20220307-AJR: v1.0.0 - Initial Release
-        20220314-AJR: v1.0.1 - Removed Hyphen from Naming
+        Packaged in FormatWrap Module
 
     .PRIVATEDATA
 
@@ -97,6 +96,12 @@ function Format-Wrap {
         Write-Verbose "start begin block"
         $br = [System.Environment]::NewLine
 
+        if ($AutoSize) {
+            $Width = $Host.UI.RawUI.WindowSize.Width
+        }
+
+        $Pattern = "((?>.{1,$Width}(?:(?<=[^\S\r\n])[^\S\r\n]?|(?=\r?\n)|-|$|[^\S\r\n]))|.{1,$Width})"
+
         ## TRAP ###############################################################
         trap {
             Write-Verbose "throw unhandled exceptions"
@@ -109,10 +114,6 @@ function Format-Wrap {
         Write-Verbose "start process block"
         foreach ($Object in $InputObject) {
 
-            if ($AutoSize) {
-                $Width = $Host.UI.RawUI.WindowSize.Width
-            }
-
             $String = switch ($Collapse) {
                 default { [string] $Object }
                 "NewLine" { $Object -replace "(\r?\n)+", "$br" }
@@ -124,7 +125,7 @@ function Format-Wrap {
 
             # regex based on answer from user557597 (anonymous)
             # https://stackoverflow.com/a/20434776
-            ($String -replace "((?>.{1,$Width}(?:(?<=[^\S\r\n])[^\S\r\n]?|(?=\r?\n)|-|$|[^\S\r\n]))|.{1,$Width})", "`$1$br").TrimEnd($br)
+            ($String -replace $Pattern, "`$1$br").TrimEnd($br)
         }
     }
 
