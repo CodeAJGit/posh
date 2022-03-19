@@ -67,7 +67,7 @@ param (
     [Parameter()]
     [ValidateRange(0, 128)]
     [int]
-    $Prefix = ($Subnet -split "\\|\/")[-1]
+    $Prefix = ($Subnet -isplit "\\|\/")[-1]
 )
 
 ## BEGIN ##################################################################
@@ -142,7 +142,7 @@ begin {
                 "InterNetworkV6" { ('1' * $InputInt).PadRight(128, '0') }
             }
             # the last element of this match is null, so skip it
-            $Octet = $Binary -split "(?<=\G[01]{8})" | Select-Object -SkipLast 1
+            $Octet = $Binary -isplit "(?<=\G[01]{8})" | Select-Object -SkipLast 1
             $Bytes = $Octet | ForEach-Object { [System.Convert]::ToUInt32($_, 2) }
 
             # append zero byte for unsigned
@@ -155,8 +155,8 @@ begin {
 
             # quick prefix validation
             switch ($true) {
-                { $this.AddressFamily -eq "InterNetwork" -and $this.Prefix -in 0..32 } { break }
-                { $this.AddressFamily -eq "InterNetworkV6" -and $this.Prefix -in 0..128 } { break }
+                { $this.AddressFamily -eq "InterNetwork" -and $this.Prefix -iin 0..32 } { break }
+                { $this.AddressFamily -eq "InterNetworkV6" -and $this.Prefix -iin 0..128 } { break }
                 default { throw [System.InvalidCastException] "An invalid prefix for the given address family was specified." }
             }
             $this.PrefixInt = $this.GetPrefixInt($this.Prefix)
@@ -188,7 +188,7 @@ begin {
 
         IPSubnet([string] $InputString) {
             try {
-                $SplitString = $InputString -split "\\|\/"
+                $SplitString = $InputString -isplit "\\|\/"
                 [System.Net.IPAddress] $InputIPAddress = $SplitString[0]
                 [int] $InputPrefix = $SplitString[-1]
             } catch {
@@ -208,7 +208,7 @@ begin {
 ## PROCESS ################################################################
 process {
     Write-Verbose "start process block"
-    [IPSubnet]::new(($Subnet -split "\\|\/")[0], $Prefix)
+    [IPSubnet]::new(($Subnet -isplit "\\|\/")[0], $Prefix)
 }
 
 ## END ####################################################################

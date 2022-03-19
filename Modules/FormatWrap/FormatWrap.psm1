@@ -116,16 +116,16 @@ function Format-Wrap {
 
             $String = switch ($Collapse) {
                 default { [string] $Object }
-                "NewLine" { $Object -replace "(\r?\n)+", "$br" }
-                "Space" { $Object -replace "\ +", " " }
-                "TabToSpace" { $Object -replace "\t", " " }
-                "SpaceTab" { $Object -replace "[^\S\r\n]+", " " }
-                "All" { $Object -replace "\s+", " " }
+                "NewLine" { $Object -ireplace "(\r?\n)+", "$br" }
+                "Space" { $Object -ireplace "\ +", " " }
+                "TabToSpace" { $Object -ireplace "\t", " " }
+                "SpaceTab" { $Object -ireplace "[^\S\r\n]+", " " }
+                "All" { $Object -ireplace "\s+", " " }
             }
 
             # regex based on answer from user557597 (anonymous)
             # https://stackoverflow.com/a/20434776
-            ($String -replace $Pattern, "`$1$br").TrimEnd($br)
+            ($String -ireplace $Pattern, "`$1$br").TrimEnd($br)
         }
     }
 

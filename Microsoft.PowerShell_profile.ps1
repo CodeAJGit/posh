@@ -11,7 +11,7 @@ function Prompt {
     # function: changes the PowerShell prompt
     Set-PSAdminContext
 
-    $PathArray = $executionContext.SessionState.Path.CurrentLocation.Path.TrimEnd("\", "/") -split "\\|\/"
+    $PathArray = $executionContext.SessionState.Path.CurrentLocation.Path.TrimEnd("\", "/") -isplit "\\|\/"
     $Host.UI.RawUI.WindowTitle = "Windows PowerShell {0} ~ {1}" -f $Host.Version.ToString(), (($PathArray | Select-Object -SkipLast 1) -join "\")
 
     Write-Host -NoNewline ("[{0}]: " -f $env:COMPUTERNAME.ToLower())
