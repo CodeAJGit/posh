@@ -45,8 +45,8 @@
     .PARAMETER AutoSize
         Adjusts the number of characters based on the width of the display.
 
-    .PARAMETER Collapse
-        Removes duplicate instances of white-space characters from the output.
+    .PARAMETER Trim
+        <Optional> Removes specified white-space characters from the output.
 
 #>
 function Format-Wrap {
@@ -88,7 +88,7 @@ function Format-Wrap {
             "All"
         )]
         [string]
-        $Collapse = "None"
+        $Trim = "None"
     )
 
     ## BEGIN ##################################################################
@@ -114,7 +114,7 @@ function Format-Wrap {
         Write-Verbose "start process block"
         foreach ($Object in $InputObject) {
 
-            $String = switch ($Collapse) {
+            $String = switch ($Trim) {
                 default { [string] $Object }
                 "NewLine" { $Object -ireplace "(\r?\n)+", "$br" }
                 "Space" { $Object -ireplace "\ +", " " }
@@ -135,6 +135,7 @@ function Format-Wrap {
         $null = [System.GC]::GetTotalMemory($true)
     }
 }
+
 
 Set-Alias -Name Wrap -Value Format-Wrap
 Export-ModuleMember -Function Format-Wrap -Alias Wrap
