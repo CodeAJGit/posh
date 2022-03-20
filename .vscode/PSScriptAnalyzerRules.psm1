@@ -82,7 +82,7 @@ function Measure-SpaceAfterCastOperator {
 
     .DESCRIPTION
         PowerShell is not case sensitive, but we follow capitalization conventions to make code easy to read.
-        Binary Operators should have the correct casing for consistency and improved readability.
+        Binary Operators should be explicit and have the correct casing for consistency and improved readability.
 
     .EXAMPLE
         Measure-ExplicitBinaryOperatorCorrectCasing -Token $Token
