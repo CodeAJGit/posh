@@ -35,13 +35,13 @@ function Measure-SpaceAfterCastOperator {
             if ($Ast -is [System.Management.Automation.Language.ConvertExpressionAst] -or
                 $Ast -is [System.Management.Automation.Language.PropertyMemberAst] -or
                 $Ast -is [System.Management.Automation.Language.ParameterAst]) {
-                # exceptions: (?=\]) for nested brackets like [int[]] and :: for constants like [int]::MaxValue
-                $Pattern = "^([^\[\]]|(?<bracket>\[)|(?<-bracket>\]( |\r?\n|(?=\])|::|$)))*(?(bracket)(?!))$"
+                # exceptions: (?=\]) for nested brackets like [int[]], :: for constants like [int]::MaxValue and \. for methods like $Array[1].Value
+                $Pattern = "^([^\[\]]|(?<bracket>\[)|(?<-bracket>\]( |\r?\n|(?=\])|::|\.|$)))*(?(bracket)(?!))$"
 
                 return ($Ast.Extent.Text -inotmatch $Pattern)
-            } else {
-                return $false
             }
+
+            return $false
         }
 
         ## TRAP ###############################################################
@@ -115,13 +115,11 @@ function Measure-ExplicitBinaryOperatorCorrectCasing {
         $Predicate = {
             param ([System.Management.Automation.Language.Token] $Token)
 
-            if ($Token.TokenFlags.HasFlag([System.Management.Automation.Language.TokenFlags]::BinaryOperator)) {
-                $Text = [System.Management.Automation.Language.TokenTraits]::Text($Token.Kind)
-
+            if (($Text = [System.Management.Automation.Language.TokenTraits]::Text($Token.Kind)) -ne "generic") {
                 return ($Token.Extent.Text -cne $Text)
-            } else {
-                return $false
             }
+
+            return $false
         }
 
         ## TRAP ###############################################################
@@ -132,7 +130,10 @@ function Measure-ExplicitBinaryOperatorCorrectCasing {
 
     ## PROCESS ################################################################
     process {
-        $Violations = $Token.Where({ & $Predicate $_ })
+        # for tokens, it is much faster to filter using .Where() then evaluate using $Predicate vice
+        # combining the filter in $Predicate. This is in contast to Ast where we can use .FindAll()
+        $Test = $Token.Where({ $_.TokenFlags.HasFlag([System.Management.Automation.Language.TokenFlags]::BinaryOperator) })
+        $Violations = $Test.Where({ & $Predicate $_ })
 
         if ($Violations.Count -ne 0) {
             foreach ($Violation in $Violations) {
@@ -197,13 +198,11 @@ function Measure-ExplicitKeywordCorrectCasing {
         $Predicate = {
             param ([System.Management.Automation.Language.Token] $Token)
 
-            if ($Token.TokenFlags.HasFlag([System.Management.Automation.Language.TokenFlags]::Keyword)) {
-                $Text = [System.Management.Automation.Language.TokenTraits]::Text($Token.Kind)
-
+            if ($Text = [System.Management.Automation.Language.TokenTraits]::Text($Token.Kind)) {
                 return ($Token.Extent.Text -cne $Text)
-            } else {
-                return $false
             }
+
+            return $false
         }
 
         ## TRAP ###############################################################
@@ -214,7 +213,10 @@ function Measure-ExplicitKeywordCorrectCasing {
 
     ## PROCESS ################################################################
     process {
-        $Violations = $Token.Where({ & $Predicate $_ })
+        # for tokens, it is much faster to filter using .Where() then evaluate using $Predicate vice
+        # combining the filter in $Predicate. This is in contast to Ast where we can .FindAll()
+        $Test = $Token.Where({ $_.TokenFlags.HasFlag([System.Management.Automation.Language.TokenFlags]::Keyword) })
+        $Violations = $Test.Where({ & $Predicate $_ })
 
         if ($Violations.Count -ne 0) {
             foreach ($Violation in $Violations) {
@@ -292,9 +294,9 @@ function Measure-NewLineAroundFunction {
                 $Pattern = "(^(\r?\n){0,2}|(\r?\n){3})[^\S\r\n]*$( [regex]::Escape($Self) )((\r?\n){3}|(\r?\n){0,2}$)"
 
                 return ($Parent -inotmatch $Pattern)
-            } else {
-                return $false
             }
+
+            return $false
         }
 
         ## TRAP ###############################################################
