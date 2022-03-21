@@ -11,7 +11,7 @@ function Prompt {
     # function: changes the PowerShell prompt
     Set-PSAdminContext
 
-    $PathArray = $executionContext.SessionState.Path.CurrentLocation.Path.TrimEnd("\", "/") -isplit "\\|\/"
+    $PathArray = $executionContext.SessionState.Path.CurrentLocation.Path.TrimEnd("\") -isplit '\\'
     $Host.UI.RawUI.WindowTitle = "Windows PowerShell {0} ~ {1}" -f $Host.Version.ToString(), (($PathArray | Select-Object -SkipLast 1) -join "\")
 
     Write-Host -NoNewline ("[{0}]: " -f $env:COMPUTERNAME.ToLower())
@@ -43,7 +43,7 @@ function Out-Password ([int] $Length = 16) {
 
 # function: c# to redefine console color codes
 Add-Type -ReferencedAssemblies System.Drawing -Language CSharp -TypeDefinition @'
-// The MIT License (MIT) ~ Copyright (c) 2015 Tom Akita
+// MIT License ~ Copyright (c) 2015 Tom Akita
 // Modified ColorMapper.cs from Colorful.Console (https://github.com/tomakita/Colorful.Console)
 // Based on code that was originally written by Alex Shvedov, and that was then modified by MercuryP.
 
@@ -70,10 +70,13 @@ namespace Colorful {
         [StructLayout(LayoutKind.Sequential)]
         private struct COLORREF {
             internal uint DWORD;
-            internal COLORREF(System.Drawing.Color color) {
-                DWORD = ((uint) color.R) + (((uint) color.G) << 8) + (((uint) color.B) << 16);
-            }
-            internal COLORREF(uint R, uint G, uint B) {
+            internal COLORREF(string hex) {
+                hex = hex.TrimStart('#');
+
+                uint R = Convert.ToUInt32(hex.Substring(0,2), 16);
+                uint G = Convert.ToUInt32(hex.Substring(2,2), 16);
+                uint B = Convert.ToUInt32(hex.Substring(4,2), 16);
+
                 DWORD = R + (G << 8) + (B << 16);
             }
         }
@@ -123,14 +126,15 @@ namespace Colorful {
             CONSOLE_SCREEN_BUFFER_INFO_EX csbe = GetBufferInfo(hConsoleOutput);
 
             // Colors based on GitHub Dark Default
-            csbe.darkYellow = new COLORREF(201, 209, 217); // #c9d1d9
-            csbe.red = new COLORREF(255, 123, 114); // #ff7b72
-            csbe.yellow = new COLORREF(255, 166, 87); // #ffa657
-            csbe.magenta = new COLORREF(210, 168, 255); // #d2a8ff
-            csbe.cyan = new COLORREF(165, 214, 255); // #a5d6ff
-            csbe.gray = new COLORREF(139, 148, 158); // #8b949e
-            csbe.darkMagenta = new COLORREF(13, 17, 23); // #0d1117
-            csbe.darkCyan = new COLORREF(121, 192, 255); // #79c0ff
+            csbe.darkYellow = new COLORREF("#c9d1d9"); // Foreground, Variable
+            csbe.red = new COLORREF("#f85149"); // Error, Keyword, Operator
+            csbe.yellow = new COLORREF("#db6d28"); // Warning
+            csbe.magenta = new COLORREF("#d2a8ff"); // Debug
+            csbe.cyan = new COLORREF("#a5d6ff"); // Verbose, String
+            csbe.gray = new COLORREF("#8b949e"); // Comment
+            csbe.darkCyan = new COLORREF("#79c0ff"); // Command, Number
+            csbe.darkMagenta = new COLORREF("#0d1117"); // Background
+            csbe.blue = new COLORREF("#79c0ff"); // Progress
 
             SetBufferInfo(hConsoleOutput, csbe);
         }
@@ -167,7 +171,7 @@ $Host.PrivateData.ErrorBackgroundColor = "darkMagenta"
 $Host.PrivateData.WarningBackgroundColor = "darkMagenta"
 $Host.PrivateData.DebugBackgroundColor = "darkMagenta"
 $Host.PrivateData.VerboseBackgroundColor = "darkMagenta"
-$Host.PrivateData.ProgressBackgroundColor = "darkCyan"
+$Host.PrivateData.ProgressBackgroundColor = "blue"
 
 # PSReadLine Foreground
 Set-PSReadLineOption -Colors @{
@@ -177,7 +181,7 @@ Set-PSReadLineOption -Colors @{
     Keyword            = "red"
     String             = "cyan"
     Operator           = "red"
-    Variable           = "darkCyan"
+    Variable           = "darkYellow"
     Command            = "darkCyan"
     Parameter          = "darkYellow"
     Type               = "red"
@@ -201,8 +205,6 @@ $PSDefaultParameterValues = @{
 }
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-Set-Location ([System.IO.DriveInfo]::GetDrives() | Where-Object DriveType -EQ "Fixed")[0].RootDirectory
-
 Clear-Host
 
 # https://artii.herokuapp.com/make?text=PowerShell&font=cyberlarge
@@ -210,5 +212,4 @@ Clear-Host
      _____   _____  _  _  _ _______  ______ _______ _     _ _______
     |_____] |     | |  |  | |______ |_____/ |______ |_____| |______ |      |
     |       |_____| |__|__| |______ |     \ ______| |     | |______ |_____ |_____
-
 "@
