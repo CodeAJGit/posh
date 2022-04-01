@@ -197,12 +197,6 @@ begin {
             $this.__init__($InputIPAddress, $InputPrefix)
         }
     }
-
-    ## TRAP ###############################################################
-    trap {
-        Write-Verbose "throw unhandled exceptions"
-        throw $_
-    }
 }
 
 ## PROCESS ################################################################

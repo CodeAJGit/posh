@@ -101,12 +101,6 @@ function Format-Wrap {
         }
 
         $Pattern = "((?>.{1,$Width}(?:(?<=[^\S\r\n])[^\S\r\n]?|(?=\r?\n)|-|$|[^\S\r\n]))|.{1,$Width})"
-
-        ## TRAP ###############################################################
-        trap {
-            Write-Verbose "throw unhandled exceptions"
-            throw $_
-        }
     }
 
     ## PROCESS ################################################################

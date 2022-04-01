@@ -43,11 +43,6 @@ function Measure-SpaceAfterCastOperator {
 
             return $false
         }
-
-        ## TRAP ###############################################################
-        trap {
-            throw $_
-        }
     }
 
     ## PROCESS ################################################################
@@ -120,11 +115,6 @@ function Measure-ExplicitBinaryOperatorCorrectCasing {
             }
 
             return $false
-        }
-
-        ## TRAP ###############################################################
-        trap {
-            throw $_
         }
     }
 
@@ -203,11 +193,6 @@ function Measure-ExplicitKeywordCorrectCasing {
             }
 
             return $false
-        }
-
-        ## TRAP ###############################################################
-        trap {
-            throw $_
         }
     }
 
@@ -297,11 +282,6 @@ function Measure-NewLineAroundFunction {
             }
 
             return $false
-        }
-
-        ## TRAP ###############################################################
-        trap {
-            throw $_
         }
     }
 
