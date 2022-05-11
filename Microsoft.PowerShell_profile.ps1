@@ -41,123 +41,23 @@ function Out-Password ([int] $Length = 16) {
 }
 
 
-# function: c# to redefine console color codes
-Add-Type -ReferencedAssemblies System.Drawing -Language CSharp -TypeDefinition @'
-// MIT License ~ Copyright (c) 2015 Tom Akita
-// Modified ColorMapper.cs from Colorful.Console (https://github.com/tomakita/Colorful.Console)
-// Based on code that was originally written by Alex Shvedov, and that was then modified by MercuryP.
+# method: c# to redefine console color codes
+Add-Type -Language CSharp -TypeDefinition (Get-Content -Path "$PSScriptRoot\Colorful.Console.cs" -Raw)
+[Colorful.Console]::SetColors(@{ # GitHub Dark Default
+        darkYellow  = "#c9d1d9" # Foreground
+        red         = "#f85149" # Error
+        yellow      = "#db6d28" # Warning
+        magenta     = "#d2a8ff" # Debug
+        cyan        = "#a5d6ff" # Verbose
+        blue        = "#79c0ff" # Progress
+        gray        = "#8b949e" # Comment
+        darkCyan    = "#79c0ff" # Command
+        darkMagenta = "#0d1117" # Background
+    })
 
-using System;
-using System.Drawing;
-using System.Runtime.InteropServices;
-
-namespace Colorful {
-    public sealed class ColorMapper {
-        [StructLayout(LayoutKind.Sequential)]
-        private struct COORD {
-            internal short X;
-            internal short Y;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct SMALL_RECT {
-            internal short Left;
-            internal short Top;
-            internal short Right;
-            internal short Bottom;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct COLORREF {
-            internal uint DWORD;
-            internal COLORREF(string hex) {
-                hex = hex.TrimStart('#');
-
-                uint R = Convert.ToUInt32(hex.Substring(0,2), 16);
-                uint G = Convert.ToUInt32(hex.Substring(2,2), 16);
-                uint B = Convert.ToUInt32(hex.Substring(4,2), 16);
-
-                DWORD = R + (G << 8) + (B << 16);
-            }
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct CONSOLE_SCREEN_BUFFER_INFO_EX {
-            internal int cbSize;
-            internal COORD dwSize;
-            internal COORD dwCursorPosition;
-            internal ushort wAttributes;
-            internal SMALL_RECT srWindow;
-            internal COORD dwMaximumWindowSize;
-            internal ushort wPopupAttributes;
-            internal bool bFullscreenSupported;
-            internal COLORREF black;
-            internal COLORREF darkBlue;
-            internal COLORREF darkGreen;
-            internal COLORREF darkCyan;
-            internal COLORREF darkRed;
-            internal COLORREF darkMagenta;
-            internal COLORREF darkYellow;
-            internal COLORREF gray;
-            internal COLORREF darkGray;
-            internal COLORREF blue;
-            internal COLORREF green;
-            internal COLORREF cyan;
-            internal COLORREF red;
-            internal COLORREF magenta;
-            internal COLORREF yellow;
-            internal COLORREF white;
-        }
-
-        private const int STD_OUTPUT_HANDLE = -11;
-        private static readonly IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern IntPtr GetStdHandle(int nStdHandle);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern bool GetConsoleScreenBufferInfoEx(IntPtr hConsoleOutput, ref CONSOLE_SCREEN_BUFFER_INFO_EX csbe);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern bool SetConsoleScreenBufferInfoEx(IntPtr hConsoleOutput, ref CONSOLE_SCREEN_BUFFER_INFO_EX csbe);
-
-        public static void SetColors() {
-            IntPtr hConsoleOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-            CONSOLE_SCREEN_BUFFER_INFO_EX csbe = GetBufferInfo(hConsoleOutput);
-
-            // Colors based on GitHub Dark Default
-            csbe.darkYellow = new COLORREF("#c9d1d9"); // Foreground, Variable
-            csbe.red = new COLORREF("#f85149"); // Error, Keyword, Operator
-            csbe.yellow = new COLORREF("#db6d28"); // Warning
-            csbe.magenta = new COLORREF("#d2a8ff"); // Debug
-            csbe.cyan = new COLORREF("#a5d6ff"); // Verbose, String
-            csbe.gray = new COLORREF("#8b949e"); // Comment
-            csbe.darkCyan = new COLORREF("#79c0ff"); // Command, Number
-            csbe.darkMagenta = new COLORREF("#0d1117"); // Background
-            csbe.blue = new COLORREF("#79c0ff"); // Progress
-
-            SetBufferInfo(hConsoleOutput, csbe);
-        }
-
-        private static CONSOLE_SCREEN_BUFFER_INFO_EX GetBufferInfo(IntPtr hConsoleOutput) {
-            CONSOLE_SCREEN_BUFFER_INFO_EX csbe = new CONSOLE_SCREEN_BUFFER_INFO_EX();
-            csbe.cbSize = (int)Marshal.SizeOf(csbe);
-
-            GetConsoleScreenBufferInfoEx(hConsoleOutput, ref csbe);
-
-            return csbe;
-        }
-
-        private static void SetBufferInfo(IntPtr hConsoleOutput, CONSOLE_SCREEN_BUFFER_INFO_EX csbe) {
-            csbe.srWindow.Bottom++;
-            csbe.srWindow.Right++;
-
-            SetConsoleScreenBufferInfoEx(hConsoleOutput, ref csbe);
-        }
-    }
-}
-'@
-[Colorful.ColorMapper]::SetColors()
+# method: c# to redefine console font
+Add-Type -Language CSharp -TypeDefinition (Get-Content -Path "$PSScriptRoot\Fontful.Console.cs" -Raw)
+[Fontful.Console]::SetFont("Consolas", 16)
 
 # Host Foreground
 $Host.PrivateData.ErrorForegroundColor = "red"
@@ -196,16 +96,19 @@ Set-PSReadLineOption -Colors @{
 Set-PSReadLineOption -BellStyle None
 $PSSessionOption = New-PSSessionOption -NoMachineProfile -OperationTimeout 30000 -OpenTimeout 30000 -CancelTimeout 30000
 $PSDefaultParameterValues = @{
-    "Get-Help:ShowWindow"          = $true
-    "Format-Table:AutoSize"        = $true
-    "Out-Default:OutVariable"      = "0"
-    "Invoke-WebRequest:Verbose"    = $true
-    "Export-Csv:NoTypeInformation" = $true
-    "*:Encoding"                   = "Utf8"
+    "Get-Help:ShowWindow"             = $true
+    "Format-Table:AutoSize"           = $true
+    "Out-Default:OutVariable"         = "0"
+    "Invoke-WebRequest:Verbose"       = $true
+    "Export-Csv:NoTypeInformation"    = $true
+    "ConvertTo-Csv:NoTypeInformation" = $true
+    "*:Encoding"                      = "Utf8"
 }
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-Clear-Host
+if (-not $Error) {
+    Clear-Host
+}
 
 # https://artii.herokuapp.com/make?text=PowerShell&font=cyberlarge
 @"
