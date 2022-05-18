@@ -41,6 +41,34 @@ function Out-Password ([int] $Length = 16) {
 }
 
 
+function ConvertTo-Base64String ([string] $Path, [string] $Destination = "$Path.txt") {
+    $splitPath = $Path -isplit "\\|\/", 2
+    $splitDest = $Destination -isplit "\\|\/", 2
+
+    $FullPath = (Resolve-Path -Path $splitPath[0]).ProviderPath.TrimEnd("/") + "/" + $splitPath[1]
+    $FullDest = (Resolve-Path -Path $splitDest[0]).ProviderPath.TrimEnd("/") + "/" + $splitDest[1]
+
+    $Byte = Get-Content -LiteralPath $FullPath -Encoding Byte
+    $String = [System.Convert]::ToBase64String($Byte)
+
+    Set-Content -LiteralPath $FullDest -Value $String -Encoding UTF8
+}
+
+
+function ConvertFrom-Base64String ([string] $Path, [string] $Destination = ($Path -ireplace "\.txt$")) {
+    $splitPath = $Path -isplit "\\|\/", 2
+    $splitDest = $Destination -isplit "\\|\/", 2
+
+    $FullPath = (Resolve-Path -Path $splitPath[0]).ProviderPath.TrimEnd("/") + "/" + $splitPath[1]
+    $FullDest = (Resolve-Path -Path $splitDest[0]).ProviderPath.TrimEnd("/") + "/" + $splitDest[1]
+
+    $String = Get-Content -LiteralPath $FullPath -Encoding UTF8
+    $Byte = [System.Convert]::FromBase64String($String)
+
+    Set-Content -LiteralPath $FullDest -Value $Byte -Encoding Byte
+}
+
+
 # method: c# to redefine console color codes
 Add-Type -Language CSharp -TypeDefinition (Get-Content -Path "$PSScriptRoot\Colorful.Console.cs" -Raw)
 [Colorful.Console]::SetColors(@{ # GitHub Dark Default
