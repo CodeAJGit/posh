@@ -134,7 +134,7 @@ function Test-SecureNetConnection {
         $DisableOnExit = [System.Collections.Generic.List[System.Security.Authentication.SslProtocols]] @()
         foreach ($Protocol in $SslProtocol) {
             Write-Verbose "$Protocol : start registry check"
-            if (-not (Get-ItemProperty -Path $RegistryMap[$Protocol]).Enabled) {
+            if (-not ($RegistryProperty = Get-ItemProperty -Path $RegistryMap[$Protocol] -ErrorAction SilentlyContinue).Enabled -and $null -ne $RegistryProperty) {
                 Write-Verbose "$Protocol : disabled"
                 if ($Force) {
                     Write-Verbose "$Protocol : force flag detected, set registry to enabled"
