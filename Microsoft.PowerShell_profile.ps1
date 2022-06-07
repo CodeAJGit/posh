@@ -1,5 +1,4 @@
 function Set-PSAdminContext () {
-    # function: sets the PSAdminContext variable
     $WindowsIdentity = [Security.Principal.WindowsIdentity]::GetCurrent()
     $WindowsPrincipal = [Security.Principal.WindowsPrincipal] $WindowsIdentity
 
@@ -8,10 +7,9 @@ function Set-PSAdminContext () {
 
 
 function Prompt {
-    # function: changes the PowerShell prompt
     Set-PSAdminContext
 
-    $PathArray = $executionContext.SessionState.Path.CurrentLocation.Path.TrimEnd("\") -isplit '\\'
+    $PathArray = $ExecutionContext.SessionState.Path.CurrentLocation.Path.TrimEnd("\") -isplit '\\'
     $Host.UI.RawUI.WindowTitle = "Windows PowerShell {0} ~ {1}" -f $Host.Version.ToString(), (($PathArray | Select-Object -SkipLast 1) -join "\")
 
     Write-Host -NoNewline ("[{0}]: " -f $env:COMPUTERNAME.ToLower())
@@ -35,43 +33,14 @@ function Prompt {
 
 
 function Out-Password ([int] $Length = 16) {
-    # function: outputs a randomly generated password
     # https://www.w3schools.com/charsets/ref_html_ascii.asp
     return -join (1..$Length | ForEach-Object { [char] (Get-Random -Minimum 33 -Maximum 127) })
 }
 
 
-function ConvertTo-Base64String ([string] $Path, [string] $Destination = "$Path.txt") {
-    $splitPath = $Path -isplit "\\|\/", 2
-    $splitDest = $Destination -isplit "\\|\/", 2
-
-    $FullPath = (Resolve-Path -Path $splitPath[0]).ProviderPath.TrimEnd("/") + "/" + $splitPath[1]
-    $FullDest = (Resolve-Path -Path $splitDest[0]).ProviderPath.TrimEnd("/") + "/" + $splitDest[1]
-
-    $Byte = Get-Content -LiteralPath $FullPath -Encoding Byte
-    $String = [System.Convert]::ToBase64String($Byte)
-
-    Set-Content -LiteralPath $FullDest -Value $String -Encoding UTF8
-}
-
-
-function ConvertFrom-Base64String ([string] $Path, [string] $Destination = ($Path -ireplace "\.txt$")) {
-    $splitPath = $Path -isplit "\\|\/", 2
-    $splitDest = $Destination -isplit "\\|\/", 2
-
-    $FullPath = (Resolve-Path -Path $splitPath[0]).ProviderPath.TrimEnd("/") + "/" + $splitPath[1]
-    $FullDest = (Resolve-Path -Path $splitDest[0]).ProviderPath.TrimEnd("/") + "/" + $splitDest[1]
-
-    $String = Get-Content -LiteralPath $FullPath -Encoding UTF8
-    $Byte = [System.Convert]::FromBase64String($String)
-
-    Set-Content -LiteralPath $FullDest -Value $Byte -Encoding Byte
-}
-
-
-# method: c# to redefine console color codes
-Add-Type -Language CSharp -TypeDefinition (Get-Content -Path "$PSScriptRoot\Colorful.Console.cs" -Raw)
-[Colorful.Console]::SetColors(@{ # GitHub Dark Default
+# c# to redefine console color codes
+Add-Type -Language CSharp -TypeDefinition (Get-Content -Path "$PSScriptRoot\Console.Color.cs" -Raw)
+[Console.Color]::SetColors(@{ # GitHub Dark Default
         darkYellow  = "#c9d1d9" # Foreground
         red         = "#f85149" # Error
         yellow      = "#db6d28" # Warning
@@ -83,9 +52,9 @@ Add-Type -Language CSharp -TypeDefinition (Get-Content -Path "$PSScriptRoot\Colo
         darkMagenta = "#0d1117" # Background
     })
 
-# method: c# to redefine console font
-Add-Type -Language CSharp -TypeDefinition (Get-Content -Path "$PSScriptRoot\Fontful.Console.cs" -Raw)
-[Fontful.Console]::SetFont("Consolas", 16)
+# c# to redefine console font
+Add-Type -Language CSharp -TypeDefinition (Get-Content -Path "$PSScriptRoot\Console.Font.cs" -Raw)
+[Console.Font]::SetFont("Consolas", 16)
 
 # Host Foreground
 $Host.PrivateData.ErrorForegroundColor = "red"
