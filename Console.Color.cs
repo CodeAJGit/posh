@@ -9,8 +9,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace Colorful {
-    public static class Console {
+namespace Console {
+    public static class Color {
         [StructLayout(LayoutKind.Sequential)]
         private struct COORD {
             internal short X;
