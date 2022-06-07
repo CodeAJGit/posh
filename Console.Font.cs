@@ -5,8 +5,8 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace Fontful {
-    public static class Console {
+namespace Console {
+    public static class Font {
         [StructLayout(LayoutKind.Sequential)]
         private struct COORD {
             internal short X;
